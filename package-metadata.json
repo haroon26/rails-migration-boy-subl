@@ -1,0 +1,9 @@
+{
+  "name": "Rails Migration Boy",
+  "description": "A Sublime Text plugin to manage Rails migrations with quick commands and CodeLens-like options.",
+  "author": "Haroon Rasheed",
+  "version": "0.0.1",
+  "platforms": ["linux"],
+  "url": "https://github.com/haroon26/rails-migration-boy-subl",
+  "dependencies": []
+}
