@@ -17,31 +17,21 @@ class RailsMigrationBoyCommand(sublime_plugin.WindowCommand):
       sublime.message_dialog("No file open.")
       return
 
-    # Determine if the current file is a migration file
     self.is_migration_file = self._is_migration_file(self.view.file_name())
     self.version = self._get_version(self.view.file_name()) if self.is_migration_file else None
-
-    # Build the options list for the quick panel
     self.options = ["Migrate All"]
     if self.is_migration_file:
       self.options.extend(["Migrate Up", "Migrate Down", "Migrate Redo"])
-
-    # Show quick panel with options (Sublime Text 3 compatible)
-    self.window.show_quick_panel(
-      self.options,
-      self.on_select,
-      sublime.MONOSPACE_FONT
-    )
+    self.window.show_quick_panel(self.options, self.on_select, sublime.MONOSPACE_FONT)
 
   def on_select(self, index):
-    if index == -1:  # User canceled
+    if index == -1:
       return
-
     commands = {
       "Migrate All": "rails db:migrate",
-      "Migrate Up": f"rails db:migrate:up VERSION={self.version}",
-      "Migrate Down": f"rails db:migrate:down VERSION={self.version}",
-      "Migrate Redo": f"rails db:migrate:redo VERSION={self.version}"
+      "Migrate Up": "rails db:migrate:up VERSION={}".format(self.version),
+      "Migrate Down": "rails db:migrate:down VERSION={}".format(self.version),
+      "Migrate Redo": "rails db:migrate:redo VERSION={}".format(self.version)
     }
     selected_option = self.options[index]
     self._run_command(commands[selected_option])
@@ -62,14 +52,8 @@ class RailsMigrationBoyCommand(sublime_plugin.WindowCommand):
     if not project_root:
       self._show_output("Could not find Rails project root.")
       return
-
-    # Start loader animation
     self._start_loader(command)
-    # Run the command in a separate thread
-    thread = threading.Thread(
-      target=self._execute_command,
-      args=(command, project_root)
-    )
+    thread = threading.Thread(target=self._execute_command, args=(command, project_root))
     thread.start()
 
   def _start_loader(self, command):
@@ -82,14 +66,14 @@ class RailsMigrationBoyCommand(sublime_plugin.WindowCommand):
       return
     frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     frame = loader_states[view_id]["frame"] = (loader_states[view_id]["frame"] + 1) % len(frames)
-    status = f"Rails Migration: {loader_states[view_id]['command']} {frames[frame]}"
+    status = "Rails Migration: {} {}".format(loader_states[view_id]['command'], frames[frame])
     self.view.set_status("rails_migration_boy", status)
     sublime.set_timeout(lambda: self._update_loader(view_id), 100)
 
   def _stop_loader(self, view_id, status):
     if view_id in loader_states:
       loader_states[view_id]["running"] = False
-      self.view.set_status("rails_migration_boy", f"Rails Migration: {loader_states[view_id]['command']} - {status}")
+      self.view.set_status("rails_migration_boy", "Rails Migration: {} - {}".format(loader_states[view_id]['command'], status))
 
   def _execute_command(self, command, project_root):
     view_id = self.view.id()
@@ -99,23 +83,22 @@ class RailsMigrationBoyCommand(sublime_plugin.WindowCommand):
         shell=True,
         cwd=project_root,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
+        stderr=subprocess.PIPE
       )
       stdout, stderr = process.communicate()
       exit_code = process.returncode
-
-      output = f"Command: {command}\n\n"
-      output += f"Output:\n{stdout}\n"
-      if stderr:
-        output += f"Errors:\n{stderr}\n"
-      output += f"Exit Code: {exit_code}"
-
+      # Decode byte output to strings (assuming UTF-8 encoding)
+      stdout_str = stdout.decode('utf-8') if stdout else ''
+      stderr_str = stderr.decode('utf-8') if stderr else ''
+      output = "Command: {}\n\nOutput:\n{}\n".format(command, stdout_str)
+      if stderr_str:
+        output += "Errors:\n{}\n".format(stderr_str)
+      output += "Exit Code: {}".format(exit_code)
       self._show_output(output)
       status = "Completed" if exit_code == 0 else "Failed"
       self._stop_loader(view_id, status)
     except Exception as e:
-      self._show_output(f"Error running command: {str(e)}")
+      self._show_output("Error running command: {}".format(str(e)))
       self._stop_loader(view_id, "Failed")
 
   def _find_project_root(self):
@@ -160,35 +143,19 @@ class RailsMigrationBoyListener(sublime_plugin.EventListener):
     version = re.search(r"(\d{14})_", file_path).group(1)
     phantom_html = (
       '<style>'
-      '  a {'
-      '  padding: 5px 10px;'
-      '  margin-right: 15px;'
-      '  background-color: #252526;'
-      '  color: #66d9ef;'
-      '  text-decoration: none;'
-      '  border-radius: 3px;'
-      '  }'
-      '  a:hover {'
-      '  background-color: #3e3e40;'
-      '  }'
-      '  body {'
-      '  padding: 5px;'
-      '  }'
+      '  a {{ padding: 5px 10px; margin-right: 15px; background-color: #252526; color: #66d9ef; text-decoration: none; border-radius: 3px; }}'
+      '  a:hover {{ background-color: #3e3e40; }}'
+      '  body {{ padding: 5px; }}'
       '</style>'
-      f'<a href="up:{version}">Up</a>'
-      f'<a href="down:{version}">Down</a>'
-      f'<a href="redo:{version}">Redo</a>'
-    )
+      '<a href="up:{0}">Up</a>'
+      '<a href="down:{0}">Down</a>'
+      '<a href="redo:{0}">Redo</a>'
+    ).format(version)
 
     if view.id() not in phantom_sets:
       phantom_sets[view.id()] = sublime.PhantomSet(view, "rails_migration_boy")
     
-    phantoms = [sublime.Phantom(
-      sublime.Region(0),
-      phantom_html,
-      sublime.LAYOUT_BELOW,  # Changed to LAYOUT_BELOW for Sublime Text 3
-      self._on_phantom_click
-    )]
+    phantoms = [sublime.Phantom(sublime.Region(0), phantom_html, sublime.LAYOUT_BELOW, self._on_phantom_click)]
     phantom_sets[view.id()].update(phantoms)
 
   def _is_migration_file(self, file_path):
@@ -199,9 +166,9 @@ class RailsMigrationBoyListener(sublime_plugin.EventListener):
   def _on_phantom_click(self, href):
     action, version = href.split(":", 1)
     commands = {
-      "up": f"rails db:migrate:up VERSION={version}",
-      "down": f"rails db:migrate:down VERSION={version}",
-      "redo": f"rails db:migrate:redo VERSION={version}"
+      "up": "rails db:migrate:up VERSION={}".format(version),
+      "down": "rails db:migrate:down VERSION={}".format(version),
+      "redo": "rails db:migrate:redo VERSION={}".format(version)
     }
     view = sublime.active_window().active_view()
     if view:
@@ -221,12 +188,8 @@ class RailsMigrationBoyExecuteCommand(sublime_plugin.WindowCommand):
     if not project_root:
       self._show_output("Could not find Rails project root.")
       return
-
     self._start_loader(command)
-    thread = threading.Thread(
-      target=self._execute_command,
-      args=(command, project_root)
-    )
+    thread = threading.Thread(target=self._execute_command, args=(command, project_root))
     thread.start()
 
   def _start_loader(self, command):
@@ -239,14 +202,14 @@ class RailsMigrationBoyExecuteCommand(sublime_plugin.WindowCommand):
       return
     frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     frame = loader_states[view_id]["frame"] = (loader_states[view_id]["frame"] + 1) % len(frames)
-    status = f"Rails Migration: {loader_states[view_id]['command']} {frames[frame]}"
+    status = "Rails Migration: {} {}".format(loader_states[view_id]['command'], frames[frame])
     self.view.set_status("rails_migration_boy", status)
     sublime.set_timeout(lambda: self._update_loader(view_id), 100)
 
   def _stop_loader(self, view_id, status):
     if view_id in loader_states:
       loader_states[view_id]["running"] = False
-      self.view.set_status("rails_migration_boy", f"Rails Migration: {loader_states[view_id]['command']} - {status}")
+      self.view.set_status("rails_migration_boy", "Rails Migration: {} - {}".format(loader_states[view_id]['command'], status))
 
   def _execute_command(self, command, project_root):
     view_id = self.view.id()
@@ -256,23 +219,22 @@ class RailsMigrationBoyExecuteCommand(sublime_plugin.WindowCommand):
         shell=True,
         cwd=project_root,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
+        stderr=subprocess.PIPE
       )
       stdout, stderr = process.communicate()
       exit_code = process.returncode
-
-      output = f"Command: {command}\n\n"
-      output += f"Output:\n{stdout}\n"
-      if stderr:
-        output += f"Errors:\n{stderr}\n"
-      output += f"Exit Code: {exit_code}"
-
+      # Decode byte output to strings (assuming UTF-8 encoding)
+      stdout_str = stdout.decode('utf-8') if stdout else ''
+      stderr_str = stderr.decode('utf-8') if stderr else ''
+      output = "Command: {}\n\nOutput:\n{}\n".format(command, stdout_str)
+      if stderr_str:
+        output += "Errors:\n{}\n".format(stderr_str)
+      output += "Exit Code: {}".format(exit_code)
       self._show_output(output)
       status = "Completed" if exit_code == 0 else "Failed"
       self._stop_loader(view_id, status)
     except Exception as e:
-      self._show_output(f"Error running command: {str(e)}")
+      self._show_output("Error running command: {}".format(str(e)))
       self._stop_loader(view_id, "Failed")
 
   def _find_project_root(self):
@@ -294,7 +256,6 @@ class RailsMigrationBoyExecuteCommand(sublime_plugin.WindowCommand):
     output_panel.set_read_only(True)
     self.window.run_command("show_panel", {"panel": "output.rails_migration_boy"})
 
-# Force phantom update on plugin load for existing views
 def plugin_loaded():
   for window in sublime.windows():
     for view in window.views():
