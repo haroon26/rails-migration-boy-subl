@@ -13,13 +13,13 @@ A Sublime Text 3 plugin to manage Rails migrations with quick commands and CodeL
 
 ### Manual Installation
 
-1. Download the `RailsMigrationBoy` folder or `RailsMigrationBoy.sublime-package` from the [releases page](https://github.com/yourusername/rails-migration-boy/releases).
-2. Place the folder in `~/.config/sublime-text-3/Packages/` or the `.sublime-package` file in `~/.config/sublime-text-3/Installed Packages/`.
+1. Download the `rails-migration-boy.sublime-package` from the [releases page](https://github.com/haroon26/rails-migration-boy-subl/releases).
+2. Place the `.sublime-package` file in `~/.config/sublime-text-3/Installed Packages/`.
 3. Restart Sublime Text 3.
 
 ### Package Control (Coming Soon)
 
-- Once available, install via Package Control by searching for "RailsMigrationBoy".
+- Once available, install via Package Control by searching for "Rails Migration Boy".
 
 ## Usage
 
