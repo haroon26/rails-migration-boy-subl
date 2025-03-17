@@ -1,6 +1,22 @@
 [
   {
-    "caption": "Rails Migration Boy",
-    "command": "rails_migration_boy"
+    "caption": "Rails Migration Boy: Migrate All",
+    "command": "rails_migration_boy_migrate_all"
+  },
+  {
+    "caption": "Rails Migration Boy: Migrate Up",
+    "command": "rails_migration_boy_migrate_up"
+  },
+  {
+    "caption": "Rails Migration Boy: Migrate Down",
+    "command": "rails_migration_boy_migrate_down"
+  },
+  {
+    "caption": "Rails Migration Boy: Migrate Redo",
+    "command": "rails_migration_boy_migrate_redo"
+  },
+  {
+    "caption": "Rails Migration Boy: Open Latest Migration",
+    "command": "rails_migration_boy_open_latest_migration"
   }
 ]
