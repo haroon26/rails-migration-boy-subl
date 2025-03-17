@@ -14,5 +14,9 @@
   {
     "caption": "Rails Migration Boy: Migrate Redo",
     "command": "rails_migration_boy_migrate_redo"
+  },
+  {
+    "caption": "Rails Migration Boy: Open Latest Migration",
+    "command": "rails_migration_boy_open_latest_migration"
   }
 ]

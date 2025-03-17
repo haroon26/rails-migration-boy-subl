@@ -103,7 +103,7 @@ class RailsMigrationBoyMigrateAllCommand(RailsMigrationBoyBaseCommand):
     self._run_command("rails db:migrate")
 
   def is_enabled(self):
-    return True  # Always enabled as it doesn't require a migration file
+    return True
 
 class RailsMigrationBoyMigrateUpCommand(RailsMigrationBoyBaseCommand):
   def run(self):
@@ -131,6 +131,32 @@ class RailsMigrationBoyMigrateRedoCommand(RailsMigrationBoyBaseCommand):
   def is_enabled(self):
     view = self.window.active_view()
     return view and self._is_migration_file(view.file_name())
+
+class RailsMigrationBoyOpenLatestMigrationCommand(RailsMigrationBoyBaseCommand):
+  def run(self):
+    project_root = self._find_project_root()
+    if not project_root:
+      sublime.message_dialog("Could not find Rails project root.")
+      return
+
+    migration_dir = os.path.join(project_root, "db", "migrate")
+    if not os.path.isdir(migration_dir):
+      sublime.message_dialog("Migration directory not found.")
+      return
+
+    migration_files = [f for f in os.listdir(migration_dir) if self._is_migration_file(os.path.join(migration_dir, f))]
+
+    if not migration_files:
+      sublime.message_dialog("No migration files found.")
+      return
+
+    latest_migration = max(migration_files, key=lambda f: self._get_version(os.path.join(migration_dir, f)))
+
+    full_path = os.path.join(migration_dir, latest_migration)
+    self.window.open_file(full_path)
+
+  def is_enabled(self):
+    return bool(self._find_project_root())
 
 class RailsMigrationBoyListener(sublime_plugin.EventListener):
   def on_load_async(self, view):
