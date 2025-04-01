@@ -13,7 +13,7 @@ A Sublime Text plugin to manage Rails migrations with quick commands and CodeLen
 4. Enter the repository URL: `https://github.com/haroon26/rails-migration-boy-subl`
 5. Press Enter to add the repository.
 6. Open the Command Palette again, type "Package Control: Install Package", and press Enter.
-7. Search for "Rails Migration Boy" (it will now show the latest version) and install it.
+7. Search for "rails-migration-boy-subl" (it will now show the latest version) and install it.
 
 ### Package Control (Older Versions Only)
 1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
